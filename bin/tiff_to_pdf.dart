@@ -1,5 +1,8 @@
 import 'dart:io';
-import 'package:path/path.dart' as p;
+//import 'package:path/path.dart' as p;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pdfWrite;
+import 'package:path/path.dart' as path;
 
 void main(List<String> arguments) async {
   print(arguments);
@@ -10,21 +13,50 @@ void main(List<String> arguments) async {
 
   for (var item in entities) {
     if (item is File) {
-      var nameEx = p.basename(item.path);
-      var name = p.basenameWithoutExtension(item.path);
-      var fExtension = p.extension(item.path);
-      var out = item.path.replaceAll(nameEx, name + '.pdf');
+      //var nameEx = path.basename(item.path);
+      //var name = path.basenameWithoutExtension(item.path);
+      var fExtension = path.extension(item.path);
+      //var out = item.path.replaceAll(nameEx, name + '.pdf');
       if (fExtension.toLowerCase() == '.tif') {
         //D:\ferramentas ocr\abbyy\fine_reader_15\FineCmd.exe
         // .\FineCmd.exe C:\Users\isaque.neves\Desktop\046\0\1.TIF /lang PortugueseBrazilian /out C:\Users\isaque.neves\Desktop\046\0\1_search.pdf
 
-        var result = await Process.run('FineCmd.exe',
-            [item.path, '/lang', 'PortugueseBrazilian', '/out', out]);
-        stdout.write(result.stdout);
-        stderr.write(result.stderr);
+        // var result = await Process.run('FineCmd.exe',
+        //     [item.path, '/lang', 'PortugueseBrazilian', '/out', out]);
+        // stdout.write(result.stdout);
+        // stderr.write(result.stderr);
+        await createPDF(item);
         print('${DateTime.now()} arquivo: ${item.path} finalizado');
         break;
       }
     }
+  }
+}
+
+Future<dynamic> createPDF(File imageFile) async {
+  try {
+    final image = pdfWrite.MemoryImage(imageFile.readAsBytesSync());
+    final pdf = pdfWrite.Document();
+    pdf.addPage(
+      pdfWrite.Page(
+          margin: pdfWrite.EdgeInsets.all(0),
+          pageFormat: PdfPageFormat.letter,
+          build: (pdfWrite.Context contex) {
+            return pdfWrite.Center(child: pdfWrite.Image(image));
+          }),
+    );
+    //final Directory? downloadsDir = await getDownloadsDirectory();
+    final dir = path.dirname(imageFile.path);
+    final oldFileName = path.basenameWithoutExtension(imageFile.path);
+    final newPath = path.join(dir, oldFileName + '.pdf');
+    final file = File(newPath);
+    var bytes = await pdf.save();
+    await file.writeAsBytes(bytes);
+    print('createPDF $newPath');
+
+    return null;
+  } catch (e, s) {
+    print('createPDF error $e $s');
+    return e;
   }
 }
