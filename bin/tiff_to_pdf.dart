@@ -11,11 +11,14 @@ void main(List<String> arguments) async {
 //final dir = Directory('path/to/directory');
   var entities = await currentDir.list(recursive: true).toList();
 
+  print('Total de arquivos : ${entities.length}');
+
   for (var item in entities) {
     if (item is File) {
-      //var nameEx = path.basename(item.path);
-      //var name = path.basenameWithoutExtension(item.path);
+      var nameEx = path.basename(item.path);
+      var name = path.basenameWithoutExtension(item.path);
       var fExtension = path.extension(item.path);
+      //print('$fExtension ${item.path}');
       //var out = item.path.replaceAll(nameEx, name + '.pdf');
       if (fExtension.toLowerCase() == '.tif') {
         //D:\ferramentas ocr\abbyy\fine_reader_15\FineCmd.exe
@@ -25,9 +28,16 @@ void main(List<String> arguments) async {
         //     [item.path, '/lang', 'PortugueseBrazilian', '/out', out]);
         // stdout.write(result.stdout);
         // stderr.write(result.stderr);
+
+        var time = Stopwatch();
+        time.start();
+
         await createPDF(item);
+        await item.delete();
+
+        print('Tempo total de execução : ${time.elapsed}');
+
         print('${DateTime.now()} arquivo: ${item.path} finalizado');
-        break;
       }
     }
   }
